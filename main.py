@@ -151,7 +151,7 @@ if st.button("Generate DOCX"):
         # Content section
         content = doc.add_paragraph()
         response = model.generate_content(f"""
-            i you to write a STRICTLY {no_of_words_per_question} words on {question} in the context of '{reponse_topic.text}', 
+            i you to write a STRICTLY {no_of_words_per_question} words on {question} in the context of '{response_topic.text}', 
             i want you to make it clear, use keywords and make it easy to understand.
             you response should be only content for the question, nothing else.
             note: do not use '*' in your output
