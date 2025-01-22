@@ -140,7 +140,7 @@ if st.button("Generate DOCX"):
 
     questions = response.text.split("###")
     no_of_words_per_question = ((pages * 450) / len(questions))
-
+    response_topic = model.generate_content(f"what is the topic that covers all the questions or points in this content '{questions}', your response should be the topic and nothing else.")
     for index, question in enumerate(questions):
         # subtitle 
         subtitle = doc.add_paragraph()
@@ -151,7 +151,7 @@ if st.button("Generate DOCX"):
         # Content section
         content = doc.add_paragraph()
         response = model.generate_content(f"""
-            i you to write a STRICTLY {no_of_words_per_question} words on {question}, 
+            i you to write a STRICTLY {no_of_words_per_question} words on {question} in the context '{reponse_topic.text}', 
             i want you to make it clear, use keywords and make it easy to understand.
             you response should be only content for the question, nothing else.
         """)
