@@ -6,6 +6,7 @@ from docx.oxml.ns import qn
 from docx.oxml import OxmlElement
 import google.generativeai as genai
 import time
+import os
 
 st.set_page_config(
     page_title="AI text formatter",
@@ -116,7 +117,7 @@ if st.button("Generate DOCX"):
     doc.add_paragraph()
     doc.add_paragraph()
 
-    api_key = "AIzaSyCZP8cNH0ZA4zxYRp237UgkiOcxkQzSf4c"
+    api_key = os.getenv("GEMINI_API_KEY")
     genai.configure(api_key=api_key)
     model = genai.GenerativeModel("gemini-1.5-flash")
 
