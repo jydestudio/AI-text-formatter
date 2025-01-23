@@ -5,8 +5,7 @@ from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
 from docx.oxml.ns import qn
 from docx.oxml import OxmlElement
 import google.generativeai as genai
-import time
-import os, io
+import time, io
 
 st.set_page_config(
     page_title="AI text formatter",
@@ -58,6 +57,8 @@ heading_font = st.selectbox("Select heading font", options=heading_font_options,
 body_font = st.selectbox("Select body font", options=body_font_options, key="body_font")
 
 questions = st.text_area("Paste your questions here", key="questions")
+make_standard = st.checkbox("Add intro and conclusion", value=False)    
+use_citation = st.checkbox("Use citation", value=False)
 
 st.markdown(
     """
@@ -91,6 +92,7 @@ def set_font(run, font_name, size, bold=False):
     run.bold = bold
 
 doc = Document()
+all_content = ""
 if st.button("Generate DOCX"):
     placeholder = st.empty()
     placeholder.info("Generating document...")
@@ -117,7 +119,7 @@ if st.button("Generate DOCX"):
     doc.add_paragraph()
     doc.add_paragraph()
 
-    api_key = os.getenv("GEMINI_API_KEY")
+    api_key = "AIzaSyCZP8cNH0ZA4zxYRp237UgkiOcxkQzSf4c"
     genai.configure(api_key=api_key)
     model = genai.GenerativeModel("gemini-1.5-flash")
 
@@ -140,7 +142,33 @@ if st.button("Generate DOCX"):
 
     questions = response.text.split("###")
     no_of_words_per_question = ((pages * 450) / len(questions))
-    response_topic = model.generate_content(f"what is the topic that covers all the questions or points in this content '{questions}', your response should be the topic and nothing else.")
+    if use_citation:
+        citation_command = "Write the content with valid inline citations using APA 7th edition format. Ensure the citations follow the structure (Author, Year). Use realistic and relevant references. note: do not quote the authors, only draw meaningful conclusion from their work and reference them appropriately"
+    else:
+        citation_command = ""
+
+    if make_standard:
+        subtitle = doc.add_paragraph()
+        subtitle_run = subtitle.add_run(f"Introduction")
+        set_font(subtitle_run, heading_font, 14, bold=True)
+        subtitle.alignment = WD_PARAGRAPH_ALIGNMENT.LEFT
+
+        # Content section
+        content = doc.add_paragraph()
+        response = model.generate_content(f"""
+            i you to write a STRICTLY {no_of_words_per_question} words introduction on these topic in a context that match them together, here are the topics {",".join(questions)}, 
+            the topics are subheading in the paper and i want you to create an introduction for it.
+            you response should be the introduction and nothing else.
+            
+        """)
+
+        content_run = content.add_run(response.text)
+
+        set_font(content_run, body_font, 12)
+        content.alignment = WD_PARAGRAPH_ALIGNMENT.JUSTIFY
+
+    doc.add_paragraph()
+    doc.add_paragraph()
     for index, question in enumerate(questions):
         # subtitle 
         subtitle = doc.add_paragraph()
@@ -151,12 +179,12 @@ if st.button("Generate DOCX"):
         # Content section
         content = doc.add_paragraph()
         response = model.generate_content(f"""
-            i you to write a STRICTLY {no_of_words_per_question} words on {question} in the context of '{response_topic.text}', 
+            i you to write a STRICTLY {no_of_words_per_question} words on {question}, 
             i want you to make it clear, use keywords and make it easy to understand.
             you response should be only content for the question, nothing else.
-            note: do not use '*' in your output
+            Note: {citation_command}
         """)
-
+        all_content += f"{response.text}\n\n"
         content_run = content.add_run(response.text)
 
         set_font(content_run, body_font, 12)
@@ -165,8 +193,40 @@ if st.button("Generate DOCX"):
         if len(questions) >= 15:
             time.sleep(4.5)
 
+    doc.add_paragraph()
+    doc.add_paragraph()
+
+    if make_standard:
+        subtitle = doc.add_paragraph()
+        subtitle_run = subtitle.add_run(f"Conclusion")
+        set_font(subtitle_run, heading_font, 14, bold=True)
+        subtitle.alignment = WD_PARAGRAPH_ALIGNMENT.LEFT
+
+        # Content section
+        content = doc.add_paragraph()
+        response = model.generate_content(f"""
+            i want you to write a STRICTLY {no_of_words_per_question} words conclusion for these topics in a context that match them together, here are the topics {",".join(questions)}, 
+            with the content {all_content}
+            
+        """)
+
+        content_run = content.add_run(response.text)
+
+        set_font(content_run, body_font, 12)
+        content.alignment = WD_PARAGRAPH_ALIGNMENT.JUSTIFY
+
+
+    for index, question in enumerate(questions):
+        # subtitle 
+        subtitle = doc.add_paragraph()
+        subtitle_run = subtitle.add_run(f"{question.title()}")
+        set_font(subtitle_run, heading_font, 14, bold=True)
+        subtitle.alignment = WD_PARAGRAPH_ALIGNMENT.LEFT
+
     doc_data = io.BytesIO()
     doc.save(doc_data)
+
+
     placeholder.success("Document Generated, click the button below to download!")
 
     st.download_button(
