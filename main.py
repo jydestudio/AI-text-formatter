@@ -168,7 +168,7 @@ if st.button("Generate DOCX"):
     doc.save("assignment.docx")
 
     with open("assignment.docx", "rb") as file:
-        file_data = file.read()
+        file_data = file
     placeholder.empty()
 
     placeholder.success("Document Generated, click the button below to download!")
