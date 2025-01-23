@@ -6,7 +6,7 @@ from docx.oxml.ns import qn
 from docx.oxml import OxmlElement
 import google.generativeai as genai
 import time
-import os
+import os, io
 
 st.set_page_config(
     page_title="AI text formatter",
@@ -165,17 +165,13 @@ if st.button("Generate DOCX"):
         if len(questions) >= 15:
             time.sleep(4.5)
 
-    doc.save("assignment.docx")
-
-    with open("assignment.docx", "rb") as file:
-        file_data = file
-    placeholder.empty()
-
+    doc_data = io.BytesIO()
+    doc.save(doc_data)
     placeholder.success("Document Generated, click the button below to download!")
 
     st.download_button(
         label="↓ Download DOCX file",
-        data=file_data,
+        data=doc_data.getvalue(),
         file_name="assignment.docx",
-        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        mime="docx"
 )
