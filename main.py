@@ -177,5 +177,5 @@ if st.button("Generate DOCX"):
         label="↓ Download DOCX file",
         data=file_data,
         file_name="assignment.docx",
-        mime="text/plain"
+        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
 )
